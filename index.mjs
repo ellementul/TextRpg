@@ -1,43 +1,67 @@
 import 'zx/globals'
-import answerProccesing from './questions.js'
-// import list  from 'cli-list-select'
+import constructorQuest from './questions.mjs'
 
+const questList = new Map
+questList.beginQuest = "start"
+questList.endQest = "end" 
 
-
-const questList = [
-  {
-    type: "isYes",
+questList.set("start",
+  constructorQuest({
     text: [
-      "Ты стоишь перед мостом через небольшую речку.",
-      "Перейти?"
-    ]
-  },
-  {
-    type: "isYes",
-    text: [
-      "Вы перешли мост.",
-      "Ты видишь двух мужчин.",
-      "Подойти?"
-    ]
-  },
-  // {
-  //   type: "selectList",
-  //   text: ["Они вытащили оружие."],
-  //   variants:
-  //     [
-  //       "Сражаться",
-  //       "Бежать",
-  //       "Говорить"
-  //     ]
-  // }
-]
+      "Вы стоите перед мостом через небольшую речку.",
+    ],
+    list: true,
+    variants: {
+      "Вы переходите мост": "ambush",
+      "Вы наблюдаете": "start"
+    }
+  })
+)
 
-let questIndex = 0
+questList.set("ambush",
+  constructorQuest({
+    text: [
+      "Вы видите двух мужчин.",
+    ],
+    list: true,
+    variants: {
+      "Вы подходите к ним ближе": "fight",
+      "Вы наблюдаете": "end"
+    }
+  })
+)
+
+questList.set("fight",
+  constructorQuest({
+    text: [
+      "Они достали оружие!",
+    ],
+    list: true,
+    variants: {
+      "Вы пытаетесь заговорить с ними" : "end",
+      "Вы сражаетесь с ними" : "end",
+      "Вы убегаете от них" : "start"
+    }
+  })
+)
+
+questList.set("end",
+  {
+    type: "end",
+    text: "Game End!"
+  }
+)
+
+
+let questName = questList.beginQuest
 do {
-  const answer = await answerProccesing[questList[questIndex].type]
-    .request(questList[questIndex].text)
 
-  if(answerProccesing[questList[questIndex].type].response(answer))
-    questIndex++
+  if (questName == questList.endQest) {
+    console.log(questList.get(questName).text)
+    break;
+  }
 
+  const answer = await questList.get(questName).request()
+
+  questName = questList.get(questName).response(answer)
 } while(true)
